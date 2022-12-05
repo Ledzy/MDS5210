@@ -116,8 +116,11 @@ def main(args: argparse.Namespace):
         train(train_source_iter, train_target_iter, classifier, domain_adv, optimizer,
               lr_scheduler, epoch, args)
 
-        # evaluate on validation set
-        acc1 = utils.validate(val_loader, classifier, args, device)
+        if args.data == 'Food':
+            # if using food dataset, save the prediction as "submission.csv" under the folder args.log.
+            acc1 = utils.validate(val_loader, classifier, args, device, save_path=args.log)
+        else:
+            acc1 = utils.validate(val_loader, classifier, args, device)
 
         # remember best acc@1 and save checkpoint
         torch.save(classifier.state_dict(), logger.get_checkpoint_path('latest'))

@@ -23,6 +23,12 @@ from tllib.utils.meter import AverageMeter, ProgressMeter
 from tllib.vision.datasets.imagelist import MultipleDomainsDataset
 
 
+# map index to class, used for Food dataset only.
+idx_to_class = {0: 0, 1: 1, 2: 10, 3: 11, 4: 12, 5: 13, 6: 14, 7: 15, 8: 16, 
+                9: 17, 10: 18, 11: 19, 12: 2, 13: 20, 14: 21, 15: 22, 16: 23, 
+                17: 24, 18: 25, 19: 26, 20: 27, 21: 28, 22: 29, 23: 3, 24: 30, 
+                25: 31, 26: 4, 27: 5, 28: 6, 29: 7, 30: 8, 31: 9}
+
 def get_model_names():
     return sorted(
         name for name in models.__dict__
@@ -104,7 +110,7 @@ def get_dataset(dataset_name, root, source, target, train_source_transform, val_
     return train_source_dataset, train_target_dataset, val_dataset, test_dataset, num_classes, class_names
 
 
-def validate(val_loader, model, args, device) -> float:
+def validate(val_loader, model, args, device, save_path=None) -> float:
     batch_time = AverageMeter('Time', ':6.3f')
     losses = AverageMeter('Loss', ':.4e')
     top1 = AverageMeter('Acc@1', ':6.2f')
@@ -120,6 +126,7 @@ def validate(val_loader, model, args, device) -> float:
     else:
         confmat = None
 
+    preds, hashs = [], []
     with torch.no_grad():
         end = time.time()
         for i, data in enumerate(val_loader):
@@ -129,6 +136,7 @@ def validate(val_loader, model, args, device) -> float:
 
             # compute output
             output = model(images)
+            pred = output.argmax(axis=1)
             loss = F.cross_entropy(output, target)
 
             # measure accuracy and record loss
@@ -142,6 +150,11 @@ def validate(val_loader, model, args, device) -> float:
             batch_time.update(time.time() - end)
             end = time.time()
 
+            # save the prediction result
+            if len(data) == 3:
+                preds.append(pred)
+                hashs += data[2]
+
             if i % args.print_freq == 0:
                 progress.display(i)
 
@@ -149,6 +162,15 @@ def validate(val_loader, model, args, device) -> float:
         if confmat:
             print(confmat.format(args.class_names))
 
+    if save_path is not None:
+        # save the prediction to the target path
+        import pandas as pd
+        from os import path
+        preds = torch.hstack(preds)
+        preds = torch.tensor([idx_to_class[p.item()] for p in preds]).to(device) # transform index to corresponding class
+        df = pd.DataFrame(list(zip(hashs, preds.cpu().numpy())), columns=['Hash', 'label'])
+        df.to_csv(path.join(save_path, 'submission.csv'), index=False)
+    
     return top1.avg
 
 

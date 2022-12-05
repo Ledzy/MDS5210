@@ -80,3 +80,5 @@ CUDA_VISIBLE_DEVICES=0 python dann.py data/digits -d Digits -s USPS -t MNIST --t
   --resize-size 28 --no-hflip --norm-mean 0.5 --norm-std 0.5 -a lenet --no-pool --lr 0.1 -b 128 -i 2500 --scratch --seed 0 --log logs/dann/USPS2MNIST
 CUDA_VISIBLE_DEVICES=0 python dann.py data/digits -d Digits -s SVHNRGB -t MNISTRGB --train-resizing 'res.' --val-resizing 'res.' \
   --resize-size 32 --no-hflip --norm-mean 0.5 0.5 0.5 --norm-std 0.5 0.5 0.5 -a dtn --no-pool --lr 0.03 -b 128 -i 2500 --scratch --seed 0 --log logs/dann/SVHN2MNIST
+
+CUDA_VISIBLE_DEVICES=0 python examples/domain_adaptation/image_classification/dann.py data/food32 -d Food -s Food32 -t UPMC32 -a resnet50 --epochs 10

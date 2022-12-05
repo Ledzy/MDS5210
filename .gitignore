@@ -138,3 +138,4 @@ examples/domain_adaptation/digits/data/*
 data/*
 dann
 logs/*
+src_only
